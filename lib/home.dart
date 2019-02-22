@@ -18,19 +18,26 @@ class Matrix1 extends StatefulWidget {
 }
 
 class _Database1State extends State<Matrix1> {
-  List color = [Colors.yellow, Colors.red, Colors.blue];
-  List<Widget> buttons = [];
-  List<TableRow> tablerow = [];
+  final colors = <Color>[Colors.yellow, Colors.red, Colors.blue];
   var match = 0;
   int groupvalue = 1;
   double _height = 120;
   String actor = "";
   int rw = 2;
   int cl = 2;
-  int e = 1;
-  Color _color;
 
-  Random num = Random();
+  List<Color> _colors;
+
+  Random random = Random();
+
+  @override
+  void initState() {
+    super.initState();
+    _colors = List<Color>(rw * cl);
+    for (int index = 0; index < rw * cl; index++) {
+      _colors[index] = randomColor();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,27 +49,31 @@ class _Database1State extends State<Matrix1> {
         Padding(
           padding: const EdgeInsets.all(30.0),
           child: Container(
-              decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  color: Colors.deepOrangeAccent),
-              height: 50,
-              width: 250,
-              padding: EdgeInsets.all(8),
-              alignment: Alignment.center,
-              child: Text("MATRIX GAME",
-                  style: TextStyle(
-                      fontFamily: "Times New Roman",
-                      fontSize: 24,
-                      color: Colors.white))),
+            decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                color: Colors.deepOrangeAccent),
+            height: 50,
+            width: 250,
+            padding: EdgeInsets.all(8),
+            alignment: Alignment.center,
+            child: Text(
+              "MATRIX GAME",
+              style: TextStyle(
+                  fontFamily: "Times New Roman",
+                  fontSize: 24,
+                  color: Colors.white),
+            ),
+          ),
         ),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             Radio(
-                activeColor: Colors.green,
-                groupValue: groupvalue,
-                value: 1,
-                onChanged: (e) => difficulty(e)),
+              activeColor: Colors.green,
+              groupValue: groupvalue,
+              value: 1,
+              onChanged: (e) => difficulty(e),
+            ),
             Text("Kids"),
             Radio(
               activeColor: Colors.yellow,
@@ -77,7 +88,7 @@ class _Database1State extends State<Matrix1> {
               value: 3,
               onChanged: (e) => difficulty(e),
             ),
-            Text("Legends    ")
+            Text("Legends    "),
           ],
         ),
         Container(
@@ -85,94 +96,57 @@ class _Database1State extends State<Matrix1> {
         ),
         Padding(
           padding: const EdgeInsets.only(left: 30, right: 30),
-          child: Table(children: table()),
+          child: Table(
+            children: table(),
+          ),
         ),
       ],
     );
   }
 
   List<TableRow> table() {
-    tablerow = [];
-
-    for (int rows = 1; rows <= rw; rows++) {
-      for (int columns = 1; columns <= cl; columns++) {
-        _color = randomColor();
-        buttons.add(MaterialButton(
-          color: _color,
+    final tableRows = <TableRow>[];
+    for (int row = 0; row < rw; row++) {
+      final rowCells = <Widget>[];
+      for (int column = 0; column < cl; column++) {
+        final index = (row * cl)+column;
+        rowCells.add(MaterialButton(
+          //key: ValueKey(index),
+          color: _colors[index],
           height: _height,
-          onPressed: () {
-            setState(() {});
-          },
+          onPressed: () => _onTableCellPressed(index),
         ));
       }
-      tablerow.add(TableRow(children: buttons));
-      buttons = [];
+      tableRows.add(TableRow(children: rowCells));
     }
-
-    colorState();
-
-    return tablerow;
+    return tableRows;
   }
 
-  check() {
-    if (match == 1) {
-      return showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return SimpleDialog(
-              title: Text("hello"),
-            );
-          });
-    }
+  void _onTableCellPressed(int index) {
+    setState(() => _colors[index] = randomColor(index));
+    checkColorMatches();
   }
 
-  Color randomColor() {
-    return color[num.nextInt(3)];
+  Color randomColor([int index]){
+   // Color current = index != null ? _colors[index] : null;
+    Color chosen;
+   // do {
+      chosen = colors[random.nextInt(colors.length)];
+   // } while(current != chosen);
+    return chosen;
   }
 
-  colorState() {
-    List<Color> colors = [];
-    tablerow.forEach((rows) {
-      //print(rows);
-      var rowbtns = rows.children;
-      print(rowbtns);
-      rowbtns.forEach((button) {
-        MaterialButton mb = button;
-
-        colors.add(mb.color);
-      });
-    });
-    print(colors);
-    if (colors[0] == colors[1]) {
-      print(colors.length);
+  void checkColorMatches() {
+    final first = _colors.first;
+    if (_colors.every((color) => color == first)) {
+      print("color matches");
+      SnackBar snackBar = new SnackBar(
+        content: Text("matches"),
+      );
+      Scaffold.of(context).showSnackBar(snackBar);
+    } else {
+      print("no match");
     }
-    int i;
-    int result = 1;
-    for (i = 0; i < colors.length; i++) {
-      int val = colors[i].value;
-      if (result == 0) {
-        break;
-      }
-      print(val);
-      for (int j = 0; j < colors.length; j++) {
-        if (val == colors[j].value) {
-          print(val == colors[j].value);
-        } else {
-          result = 0;
-          break;
-        }
-      }
-    }
-    setState(() {
-      if (i >= colors.length) {
-        print("color matches");
-        match = 1;
-       // check();
-      } else {
-        print("no match");
-        match = 0;
-      }
-    });
   }
 
   difficulty(e) {
